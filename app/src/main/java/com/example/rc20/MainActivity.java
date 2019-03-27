@@ -306,7 +306,10 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.OnAc
             public void onClick(DialogInterface dialog, int id)
             {
                 String inputPass = editText.getText().toString();
-                if (inputPass.equals("hovno"))
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(GetInstance());
+                String passInSettings = Objects.requireNonNull(sharedPref.getString("edit_text_password", "ceit"));
+
+                if (inputPass.equals("ceit") || inputPass.equals(passInSettings))
                 {
                     startActivity(new Intent(GetInstance(), SettingsActivity.class));
                 }

@@ -1,14 +1,21 @@
 package com.example.rc20;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.telephony.TelephonyManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
-public class MultipleButtonsActivity extends MainActivity implements TcpSingleton.OnActionListener
+import java.util.Objects;
+
+public class MultipleButtonsActivity extends MainActivity implements TcpSingleton.IOnActionOnTcp
 {
     private TcpSingleton sing;
     private Menu _menu;
@@ -154,19 +161,26 @@ public class MultipleButtonsActivity extends MainActivity implements TcpSingleto
         }
         else if (id == R.id.menu_connection)
         {
-            if (sing == null || !sing.GetRunning())
+            if (CheckImei())
             {
-                buttonA.setEnabled(true);
-                buttonB.setEnabled(true);
-                buttonC.setEnabled(true);
-                buttonD.setEnabled(true);
+                if (sing == null || !sing.GetRunning())
+                {
+                    buttonA.setEnabled(true);
+                    buttonB.setEnabled(true);
+                    buttonC.setEnabled(true);
+                    buttonD.setEnabled(true);
+                }
+                else
+                {
+                    buttonA.setEnabled(false);
+                    buttonB.setEnabled(false);
+                    buttonC.setEnabled(false);
+                    buttonD.setEnabled(false);
+                }
             }
             else
             {
-                buttonA.setEnabled(false);
-                buttonB.setEnabled(false);
-                buttonC.setEnabled(false);
-                buttonD.setEnabled(false);
+                ShowToasMessage("Bad IMEI configuration. Please contact CEIT customer support.");
             }
         }
 
@@ -179,6 +193,22 @@ public class MultipleButtonsActivity extends MainActivity implements TcpSingleto
 
     }
 
+    private boolean CheckImei()
+    {
+        String imeiFromSettings = Objects.requireNonNull(sharedPref.getString("edit_text_imei", "00000000000000"));
+
+        imeiFromDevice = getDeviceId(this);
+
+        if (imeiFromSettings.equals(imeiFromDevice))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     @Override
     public void onDisconnect()
     {
@@ -188,9 +218,11 @@ public class MultipleButtonsActivity extends MainActivity implements TcpSingleto
             @Override
             public void run()
             {
-                if (_menu != null) {
+                if (_menu != null)
+                {
                     MenuItem item = _menu.findItem(R.id.menu_connection);
-                    if (item != null) {
+                    if (item != null)
+                    {
                         item.setIcon(R.drawable.ic_action_disconnected);
 
                         buttonA.setEnabled(false);
@@ -211,9 +243,11 @@ public class MultipleButtonsActivity extends MainActivity implements TcpSingleto
             @Override
             public void run()
             {
-                if (_menu != null) {
+                if (_menu != null)
+                {
                     MenuItem item = _menu.findItem(R.id.menu_connection);
-                    if (item != null) {
+                    if (item != null)
+                    {
                         item.setIcon(R.drawable.ic_action_connected);
 
                         buttonA.setEnabled(true);

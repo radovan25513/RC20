@@ -5,11 +5,8 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
@@ -23,9 +20,9 @@ import static com.example.rc20.MainActivity.port;
 public class TcpSingleton
 {
     private static TcpSingleton tcpInstance = null;
-    private static OnActionListener _onReceiveListener = null;
-    private static OnActionListener _onDisconnectListener = null;
-    private static OnActionListener _onConnectListener = null;
+    private static IOnActionOnTcp _onReceiveListener = null;
+    private static IOnActionOnTcp _onDisconnectListener = null;
+    private static IOnActionOnTcp _onConnectListener = null;
     public static boolean atLeastOneTimeConnected = false;
 
     public static boolean tcpRunning = false;
@@ -51,7 +48,7 @@ public class TcpSingleton
     }
 
 
-    public interface OnActionListener
+    public interface IOnActionOnTcp
     {
         void onReceive(byte[] message);
 
@@ -60,12 +57,11 @@ public class TcpSingleton
         void onConnect();
     }
 
-    public static TcpSingleton getInstance(String _ip, int _port, OnActionListener onReceiveListener, OnActionListener onDisconnectListener, OnActionListener onConnectListener)
+    public static TcpSingleton getInstance(String _ip, int _port, IOnActionOnTcp onReceiveListener, IOnActionOnTcp onDisconnectListener, IOnActionOnTcp onConnectListener)
     {
         if (tcpInstance == null)
         {
             tcpInstance = new TcpSingleton();
-
         }
         _onReceiveListener = onReceiveListener;
         _onDisconnectListener = onDisconnectListener;

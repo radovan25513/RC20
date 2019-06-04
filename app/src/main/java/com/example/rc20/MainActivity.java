@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -48,6 +49,13 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        if (android.os.Build.VERSION.SDK_INT > 9)
+        {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
         CheckPermissionAndStartIntent();
 
         instance = this;
@@ -71,7 +79,6 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
             public void onClick(View v)
             {
                 // Code here executes on main thread after user presses button
-                int id = rc_id;
                 char[] message = {0x80, 0x02, 0x00, 0x0B, 0x14, 0x02, 0x02, (char) GetRcId(), 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, 0x01};
 
 
@@ -165,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
 
     private boolean CheckImei()
     {
-        String imeiFromSettings = Objects.requireNonNull(sharedPref.getString("edit_text_imei", "00000000000000"));
+        String imeiFromSettings = Objects.requireNonNull(sharedPref.getString("edit_text_imei", "865262048679039"));
 
         imeiFromDevice = getDeviceId(this);
 

@@ -1,8 +1,6 @@
 package com.example.rc20;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -79,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
             public void onClick(View v)
             {
                 // Code here executes on main thread after user presses button
-                char[] message = {0x80, 0x02, 0x00, 0x0B, 0x14, 0x02, 0x02, (char) GetRcId(), 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, 0x01};
+                char[] message = {0x14, 0x02, 0x02, (char) GetRcId(), 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, 0x01};
 
 
                 if (sing != null && sing.GetRunning())
@@ -192,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_PHONE_STATE}, 1);
             //SEY SOMTHING LIKE YOU CANT ACCESS WITHOUT PERMISSION
         } else {
-            doSomthing();
+            readImeiNumber();
         }
     }
 
@@ -201,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         switch (requestCode) {
             case 1: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    doSomthing();
+                    readImeiNumber();
                 } else if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
                     //SEY SOMTHING LIKE YOU CANT ACCESS WITHOUT PERMISSION
                     //you can show something to user and open setting -> apps -> youApp -> permission
@@ -213,7 +211,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
     }
 
 
-    void doSomthing() {
+    void readImeiNumber() {
         imeiFromDevice = getDeviceId(MainActivity.this);
     }
 
@@ -374,9 +372,9 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
     }
 
     public static MainActivity GetInstance()
-    {
-        return instance;
-    }
+{
+    return instance;
+}
 
     protected void showInputDialog()
     {

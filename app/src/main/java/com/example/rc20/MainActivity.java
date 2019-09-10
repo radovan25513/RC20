@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
                 }
                 else
                 {
-                    if (inputPass.equals("ceit") || inputPass.equals("superceit"))
+                    if (inputPass.equals("Fiskijeladyboy123") || inputPass.equals("superceit"))
                     {
                         if (inputPass.equals("superceit"))
                         {

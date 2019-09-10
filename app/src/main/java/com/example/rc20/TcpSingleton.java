@@ -1,21 +1,17 @@
 package com.example.rc20;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.util.Log;
+import android.preference.PreferenceManager;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
-
-import static android.content.ContentValues.TAG;
-import static com.example.rc20.MainActivity.address;
-import static com.example.rc20.MainActivity.port;
+import java.util.Objects;
 
 public class TcpSingleton
 {
@@ -23,26 +19,36 @@ public class TcpSingleton
     private static IOnActionOnTcp _onReceiveListener = null;
     private static IOnActionOnTcp _onDisconnectListener = null;
     private static IOnActionOnTcp _onConnectListener = null;
-    public static boolean atLeastOneTimeConnected = false;
 
     public static boolean tcpRunning = false;
     private static boolean discFromUi = false;
-    private static Client client;
+    private static TcpClient tcpClient;
+
+    private static SharedPreferences sharedPreferences;
+
+    private static Context _context;
 
     private TcpSingleton()
     {
+        tcpInstance = this;
+    }
+
+    public static void initContext(Context context)
+    {
+        _context = context;
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(_context);
     }
 
     public static void Disconnect(boolean b)
     {
         discFromUi = b;
-        if (client != null)
+        if (tcpClient != null)
         {
-            client.Disconnect();
+            tcpClient.Disconnect();
         }
     }
 
-    public boolean GetRunning()
+    public boolean IsRunning()
     {
         return tcpRunning;
     }
@@ -57,7 +63,7 @@ public class TcpSingleton
         void onConnect();
     }
 
-    public static TcpSingleton getInstance(String _ip, int _port, IOnActionOnTcp onReceiveListener, IOnActionOnTcp onDisconnectListener, IOnActionOnTcp onConnectListener)
+    static TcpSingleton getInstance(IOnActionOnTcp onReceiveListener, IOnActionOnTcp onDisconnectListener, IOnActionOnTcp onConnectListener)
     {
         if (tcpInstance == null)
         {
@@ -72,83 +78,70 @@ public class TcpSingleton
 
     public static void Connect(String _ip, int _port)
     {
-        client = new Client(_ip, _port, tcpInstance);
-        client.execute();
+        tcpClient = new TcpClient(_ip, _port);
+        tcpClient.execute();
     }
 
 
-    public void sendMsg(final char[] message)
+    public void sendMsg(final byte[] message)
     {
-        client.sendMessage(message);
+        tcpClient.sendMessage(message);
     }
 
-    private static class Client extends AsyncTask<Void, String, Void>
+    private static class TcpClient extends AsyncTask<Void, String, Void>
     {
-        private TcpSingleton _sing;
         String dstAddress;
         int dstPort;
-        BufferedReader in;
-        PrintWriter out;
-        String incomingMessage;
+        DataOutputStream out;
+        DataInputStream in;
+        Socket socket;
 
 
-        Client(String addr, int port, TcpSingleton sing)
+        TcpClient(String addr, int port)
         {
             dstAddress = addr;
             dstPort = port;
-            _sing = sing;
+            socket = null;
+            in = null;
+            out = null;
         }
 
-        Socket socket = null;
 
         @Override
         protected Void doInBackground(Void... arg0)
         {
-
             try
             {
                 InetSocketAddress sockAdr = new InetSocketAddress(dstAddress, dstPort);
                 socket = new Socket();
-                int timeout = 5000;
+                int timeout = 1000;
                 socket.connect(sockAdr, timeout);
-
+                in = new DataInputStream(socket.getInputStream());
+                out = new DataOutputStream(socket.getOutputStream());
 
                 tcpRunning = true;
-                atLeastOneTimeConnected = true;
                 discFromUi = false;
 
-                out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
-
-                //in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                _onConnectListener.onConnect();
 
                 while (tcpRunning)
                 {
-                    InputStream stream = socket.getInputStream();
                     byte[] data = new byte[30];
-                    int count = stream.read(data);
+                    int count = in.read(data);
                     _onReceiveListener.onReceive(data);
-
-
-                    /*incomingMessage = in.readLine();
-                    if (incomingMessage != null)
-                    {
-                        publishProgress(incomingMessage);
-                        String s = "jono";
-                    }
-                    else
-                    {
-                        tcpRunning = false;
-                    }
-                    incomingMessage = null;*/
                 }
-            } catch (UnknownHostException e)
+            }
+            catch (Exception e)
             {
                 e.printStackTrace();
-            } catch (IOException e)
+            }
+            finally
             {
-                e.printStackTrace();
-            } finally
-            {
+                if (tcpClient != null)
+                {
+                    tcpClient.cancel(true);
+                }
+
                 Disconnect();
             }
             return null;
@@ -157,9 +150,6 @@ public class TcpSingleton
         @Override
         protected void onProgressUpdate(String... message)
         {
-
-            byte[] b = message[0].getBytes();
-            _onReceiveListener.onReceive(b);
         }
 
         @Override
@@ -170,60 +160,59 @@ public class TcpSingleton
 
         private void Disconnect()
         {
-            if (_onDisconnectListener != null)
-            {
-                _onDisconnectListener.onDisconnect();
-            }
-
-            tcpRunning = false;
             try
             {
+                tcpRunning = false;
+
                 if (socket != null)
                 {
                     socket.close();
                 }
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-            if (out != null)
-            {
-                out.flush();
-                out.close();
-            }
-            /*in = null;
-            out = null;*/
 
-            if (MainActivity.GetInstance().GetAutoReconnect() && !discFromUi)
-            {
-                try
+
+                if (out != null)
                 {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e)
-                {
-                    e.printStackTrace();
+                    out.flush();
+                    out.close();
                 }
 
-                client = new Client(address, port, _sing);
-                client.execute();
                 if (_onDisconnectListener != null)
                 {
-                    _onDisconnectListener.onConnect();
+                    _onDisconnectListener.onDisconnect();
+                }
+
+                if (sharedPreferences.getBoolean("switch_autoconnect", true) && !discFromUi)
+                {
+                    Thread.sleep(4000);
+                    Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))));
+                }
+                else
+                {
+                    //tcpInstance = null;
+                    tcpClient = null;
                 }
             }
-            else
+            catch (IOException | InterruptedException e)
             {
-                tcpInstance = null;
+                e.printStackTrace();
+
+                Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))));
             }
         }
 
-        private void sendMessage(final char[] message)
+        private void sendMessage(final byte[] message)
         {
-            if (out != null && !out.checkError())
+            if (out != null)
             {
-                out.println(message);
-                out.flush();
-                Log.d(TAG, "Sent Message: " + message);
+                try
+                {
+                    out.writeInt(message.length); // write length of the message
+                    out.write(message);           // write the message
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
             }
         }
     }

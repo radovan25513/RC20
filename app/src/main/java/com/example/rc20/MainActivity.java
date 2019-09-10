@@ -8,37 +8,52 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.StrictMode;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.PreferenceManager;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.gun0912.tedpermission.PermissionListener;
+import com.gun0912.tedpermission.TedPermission;
+
+import java.util.List;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnActionOnTcp
 {
-    private static final int REQUEST_PERMISSION_PHONE_STATE = 1;
     private TcpSingleton sing;
-    private static MainActivity instance;
-    public static int port;
-    public static String address;
-    public static int rc_id;
-    public static boolean reconnect;
-    SharedPreferences sharedPref;
+    private MainActivity instance;
+    static SharedPreferences sharedPreferences;
+
+    private int _port;
+    private String _address;
+    private int _rc_id;
+    private boolean _reconnect;
+    private int _idOfStartingActivity;
     private Menu _menu;
-    Button button;
-    public static boolean enterHideMenu = false;
+    Button button_single;
     String imeiFromDevice;
+    private String _hardcodedImei = "358508072457716";
+    private String _hardcodedImeisony = "353748087140429";
+    private String _hardcodedImeihuawei = "869785029868615";
+    private String _hardcodedImeinemak1 = "358508072457716";
+    private String _hardcodedImeinemak2 = "869785029868615";
+
+    Toast _toast;
 
 
     @Override
@@ -48,52 +63,83 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         setContentView(R.layout.activity_main);
 
 
+        TedPermission.with(this)
+                .setPermissionListener(permissionlistener)
+                .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
+                .setPermissions(Manifest.permission.READ_PHONE_STATE, Manifest.permission.INTERNET, Manifest.permission.RECEIVE_BOOT_COMPLETED)
+                .check();
+
+
+        setupSharedPreferences();
+        saveImeiToSharedPreference();
+
+
         if (android.os.Build.VERSION.SDK_INT > 9)
         {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
         }
 
-        CheckPermissionAndStartIntent();
-
         instance = this;
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        button = findViewById(R.id.singleButton);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        sing = TcpSingleton.getInstance(GetAddress(), GetPort(), this, this, this);
+        button_single = findViewById(R.id.singleButton);
 
-        if (sing.GetRunning())
+        TcpSingleton.initContext(this);
+        sing = TcpSingleton.getInstance(this, this, this);
+
+        if (sing.IsRunning())
         {
-            button.setEnabled(true);
+            button_single.setEnabled(true);
         }
         else
         {
-            button.setEnabled(false);
+            button_single.setEnabled(false);
         }
 
 
-        button.setOnClickListener(new View.OnClickListener()
+        button_single.setOnClickListener(new View.OnClickListener()
         {
             public void onClick(View v)
             {
-                // Code here executes on main thread after user presses button
-                char[] message = {0x14, 0x02, 0x02, (char) GetRcId(), 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, 0x01};
+                byte id = (byte) _rc_id;
+                // Code here executes on main thread after user presses button_single
+                byte[] message = {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, (byte) (id & 0xff), 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, 0x01};
 
 
-                if (sing != null && sing.GetRunning())
+                if (sing != null && sing.IsRunning())
                 {
                     sing.sendMsg(message);
                 }
                 else
                 {
-                    ShowToasMessage("Connect to server first.");
+                    ShowToasMessage("Connect to server first!");
                 }
             }
         });
 
-        ReadPreferenceValues();
+        setupSharedPreferences();
 
+        if (_idOfStartingActivity == 3)
+        {
+            Intent aboutScreen = new Intent(MainActivity.this, ThreeButtonsActivity.class);
+            this.startActivity(aboutScreen);
+        }
+        else if (_idOfStartingActivity == 4)
+        {
+            Intent aboutScreen = new Intent(MainActivity.this, MultipleButtonsActivity.class);
+            this.startActivity(aboutScreen);
+        }
+        else
+        {
+            //Connect();
+        }
+    }
 
+    private void saveImeiToSharedPreference()
+    {
+        SharedPreferences sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences.edit().putString("deviceImei", getDeviceId(this)).commit();
     }
 
     @Override
@@ -106,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
 
         _menu = menu;
 
-        if (sing.GetRunning())
+        if (sing.IsRunning())
         {
             item = menu.findItem(R.id.menu_connection);
             item.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_action_connected));
@@ -115,17 +161,96 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         return true;
     }
 
+    private void showSettingsInputDialog(final boolean fromBoot)
+    {
+        // get prompts.xml view
+        LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
+        View promptView = layoutInflater.inflate(R.layout.password_input_dialog, null);
+        android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(MainActivity.this);
+        alertDialogBuilder.setView(promptView);
+
+
+        final EditText editText = (EditText) promptView.findViewById(R.id.edittext);
+
+
+        // setup a dialog window
+        alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener()
+        {
+            public void onClick(DialogInterface dialog, int id)
+            {
+                String inputPass = editText.getText().toString();
+
+                if (fromBoot)
+                {
+                    if (inputPass.equals("superceit"))
+                    {
+                        startSettingsActivity(false);
+                    }
+                    else
+                    {
+                        finish();
+                        System.exit(0);
+                    }
+                }
+                else
+                {
+                    if (inputPass.equals("ceit") || inputPass.equals("superceit"))
+                    {
+                        if (inputPass.equals("superceit"))
+                        {
+                            startSettingsActivity(false);
+                        }
+                        else
+                        {
+                            startSettingsActivity(true);
+                        }
+                    }
+                }
+            }
+        }).setNegativeButton("Cancel",
+                new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        if (fromBoot)
+                        {
+                            finish();
+                            System.exit(0);
+                        }
+                        else
+                        {
+                            dialog.cancel();
+                        }
+                    }
+                });
+
+        // create an alert dialog
+        android.app.AlertDialog alert = alertDialogBuilder.create();
+        Objects.requireNonNull(alert.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        alert.show();
+    }
+
+    private void startSettingsActivity(boolean normalSettings)
+    {
+        Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+
+        Bundle bundle = new Bundle();
+        bundle.putBoolean("normalSettings", normalSettings);
+        intent.putExtras(bundle);
+        startActivity(intent);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
         // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
+        // automatically handle clicks on the Home/Up button_single, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         if (id == R.id.menu_settings)
         {
-            showInputDialog();
+            showSettingsInputDialog(false);
         }
         else if (id == R.id.menu_oneButton)
         {
@@ -133,24 +258,29 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         }
         else if (id == R.id.menu_fourButtons)
         {
+            Disconnect(true);
             startActivity(new Intent(this, MultipleButtonsActivity.class));
-
+        }
+        else if (id == R.id.menu_threeButtons)
+        {
+            Disconnect(true);
+            startActivity(new Intent(this, ThreeButtonsActivity.class));
         }
         else if (id == R.id.menu_connection)
         {
             if (CheckImei())
             {
-                if (sing == null || !sing.GetRunning())
+                if (sing == null || !sing.IsRunning())
                 {
                     Connect();
                     item.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_action_connected));
-                    button.setEnabled(true);
+                    button_single.setEnabled(true);
                 }
                 else
                 {
-                    Disconnect();
+                    Disconnect(true);
                     item.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_action_disconnected));
-                    button.setEnabled(false);
+                    button_single.setEnabled(false);
                 }
             }
             else
@@ -168,11 +298,28 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         TcpSingleton.Connect(GetAddress(), GetPort());
     }
 
+
+    PermissionListener permissionlistener = new PermissionListener()
+    {
+        @Override
+        public void onPermissionGranted()
+        {
+            //Toast.makeText(MainActivity.this, "Permission Granted", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onPermissionDenied(List<String> deniedPermissions)
+        {
+            ShowToasMessage("Permission Denied\n" + deniedPermissions.toString());
+        }
+    };
+
     private boolean CheckImei()
     {
-        String imeiFromSettings = Objects.requireNonNull(sharedPref.getString("edit_text_imei", "865262048679039"));
+        SharedPreferences sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        String imeiFromSettings = Objects.requireNonNull(sharedPreferences.getString("edit_text_imei", "00000000000000"));
+        String imeiFromDevice = Objects.requireNonNull(sharedPreferences.getString("deviceImei", "00000000000000"));
 
-        imeiFromDevice = getDeviceId(this);
 
         if (imeiFromSettings.equals(imeiFromDevice))
         {
@@ -184,23 +331,19 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         }
     }
 
-    private void CheckPermissionAndStartIntent() {
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED
-                || ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_PHONE_STATE}, 1);
-            //SEY SOMTHING LIKE YOU CANT ACCESS WITHOUT PERMISSION
-        } else {
-            readImeiNumber();
-        }
-    }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case 1: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults)
+    {
+        switch (requestCode)
+        {
+            case 1:
+            {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                {
                     readImeiNumber();
-                } else if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                }
+                else if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED)
+                {
                     //SEY SOMTHING LIKE YOU CANT ACCESS WITHOUT PERMISSION
                     //you can show something to user and open setting -> apps -> youApp -> permission
                     // or unComment below code to show permissionRequest Again
@@ -211,7 +354,8 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
     }
 
 
-    void readImeiNumber() {
+    void readImeiNumber()
+    {
         imeiFromDevice = getDeviceId(MainActivity.this);
     }
 
@@ -232,9 +376,9 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         return telephonyManager.getDeviceId();
     }
 
-    private void Disconnect()
+    private void Disconnect(boolean fromUi)
     {
-        TcpSingleton.Disconnect(true);
+        TcpSingleton.Disconnect(fromUi);
     }
 
     public void ShowToasMessage(final String message)
@@ -244,77 +388,27 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
             @Override
             public void run()
             {
+                if (_toast != null)
+                {
+                    _toast.cancel();
 
-                Toast.makeText(GetInstance(), message,
-                        Toast.LENGTH_LONG).show();
+                    _toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                }
+                else
+                {
+                    _toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                }
             }
         });
-    }
-
-    private void ReadPreferenceValues()
-    {
-        // Read settings
-        boolean hovno = tryParseInt(sharedPref.getString("edit_text_port", "9750"));
-        if (hovno)
-        {
-            port = Integer.parseInt(Objects.requireNonNull(sharedPref.getString("edit_text_port", "9750")));
-        }
-
-
-        hovno = tryParseInt(sharedPref.getString("edit_text_rc_id", "1"));
-        if (hovno)
-        {
-            rc_id = Integer.parseInt(Objects.requireNonNull(sharedPref.getString("edit_text_rc_id", "1")));
-        }
-
-
-        address = Objects.requireNonNull(sharedPref.getString("edit_text_address", "192.168.200.187"));
-
-
-        reconnect = sharedPref.getBoolean("switch_autoconnect", true);
-    }
-
-    String GetAddress()
-    {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        return address = Objects.requireNonNull(sharedPref.getString("edit_text_address", "192.168.200.187"));
-    }
-
-    int GetPort()
-    {
-        boolean hovno = tryParseInt(sharedPref.getString("edit_text_port", "9750"));
-
-        return hovno ? port = Integer.parseInt(Objects.requireNonNull(sharedPref.getString("edit_text_port", "9750"))) : 9750;
-    }
-
-    int GetRcId()
-    {
-        boolean hovno = tryParseInt(sharedPref.getString("edit_text_rc_id", "1"));
-
-        return hovno ? rc_id = Integer.parseInt(Objects.requireNonNull(sharedPref.getString("edit_text_rc_id", "1"))) : 1;
-    }
-
-    boolean GetAutoReconnect()
-    {
-        return sharedPref.getBoolean("switch_autoconnect", true);
-    }
-
-    boolean tryParseInt(String value)
-    {
-        try
-        {
-            Integer.parseInt(value);
-            return true;
-        } catch (NumberFormatException e)
-        {
-            return false;
-        }
     }
 
     @Override
     public void onReceive(byte[] message)
     {
-        String skuska = "sad";
+        if (Utils.byteArrayOnlyZeros(message))
+        {
+            Disconnect(false);
+        }
 
         int kurvafix = message[3];
         if (message[3] == 0x0B)
@@ -327,6 +421,15 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         }
     }
 
+
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        TcpSingleton.initContext(this);
+        sing = TcpSingleton.getInstance(this, this, this);
+    }
 
     @Override
     public void onDisconnect()
@@ -343,11 +446,13 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
                     if (item != null)
                     {
                         item.setIcon(R.drawable.ic_action_disconnected);
-                        button.setEnabled(false);
+                        button_single.setEnabled(false);
                     }
                 }
             }
         });
+
+        ShowToasMessage("Disconnected to server!");
     }
 
     @Override
@@ -364,60 +469,49 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
                     if (item != null)
                     {
                         item.setIcon(R.drawable.ic_action_connected);
-                        button.setEnabled(true);
+                        button_single.setEnabled(true);
                     }
                 }
             }
         });
+
+        ShowToasMessage("Connected to server!");
     }
 
-    public static MainActivity GetInstance()
-{
-    return instance;
-}
-
-    protected void showInputDialog()
+    private int GetPort()
     {
-        enterHideMenu = false;
+        return Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750")));
+    }
 
-        // get prompts.xml view
-        LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
-        View promptView = layoutInflater.inflate(R.layout.input_dialog, null);
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-        alertDialogBuilder.setView(promptView);
+    private String GetAddress()
+    {
+        return Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187"));
+    }
 
+    private void setupSharedPreferences()
+    {
+        SharedPreferences sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
 
-        final EditText editText = (EditText) promptView.findViewById(R.id.edittext);
-        // setup a dialog window
-        alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener()
+        // Read settings
+        boolean hovno = Utils.tryParseInt(sharedPreferences.getString("edit_text_port", "9750"));
+        if (hovno)
         {
-            public void onClick(DialogInterface dialog, int id)
-            {
-                String inputPass = editText.getText().toString();
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(GetInstance());
-                String passInSettings = Objects.requireNonNull(sharedPref.getString("edit_text_password", "ceit"));
+            _port = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750")));
+        }
 
 
-                if (inputPass.equals("ceit") || inputPass.equals(passInSettings) || inputPass.equals("super"))
-                {
-                    if (inputPass.equals("super"))
-                    {
-                        enterHideMenu = true;
-                    }
-                    startActivity(new Intent(GetInstance(), SettingsActivity.class));
-                }
-            }
-        }).setNegativeButton("Cancel",
-                new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int id)
-                    {
-                        dialog.cancel();
-                    }
-                });
+        hovno = Utils.tryParseInt(sharedPreferences.getString("edit_text_rc_id", "1"));
+        if (hovno)
+        {
+            _rc_id = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_rc_id", "1")));
+        }
 
-        // create an alert dialog
-        AlertDialog alert = alertDialogBuilder.create();
-        alert.show();
+
+        _address = Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187"));
+
+
+        _reconnect = sharedPreferences.getBoolean("switch_autoconnect", true);
+
+        _idOfStartingActivity = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("list_pref_starting_activity", "1")));
     }
 }

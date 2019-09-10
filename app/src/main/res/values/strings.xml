@@ -28,37 +28,42 @@
     </string-array>
 
     <!-- Example settings for Data & Sync -->
-    <string name="pref_header_data_sync">Data &amp; sync</string>
 
-    <string name="pref_title_sync_frequency">Sync frequency</string>
-    <string-array name="pref_sync_frequency_titles">
-        <item>15 minutes</item>
-        <item>30 minutes</item>
-        <item>1 hour</item>
-        <item>3 hours</item>
-        <item>6 hours</item>
-        <item>Never</item>
-    </string-array>
-    <string-array name="pref_sync_frequency_values">
-        <item>15</item>
-        <item>30</item>
-        <item>60</item>
-        <item>180</item>
-        <item>360</item>
-        <item>-1</item>
+    <string-array name="starting_activity_names_array">
+        <item>One button</item>
+        <item>Three buttons</item>
+        <item>Four buttons</item>
     </string-array>
 
-    <string-array name="list_preference_entries">
-        <item>Entry 1</item>
-        <item>Entry 2</item>
-        <item>Entry 3</item>
-    </string-array>
-
-    <string-array name="list_preference_entry_values">
+    <string-array name="starting_activity_values_array">
         <item>1</item>
-        <item>2</item>
         <item>3</item>
+        <item>2</item>
     </string-array>
+
+
+    <string-array name="three_buttons_color_names">
+        <item>Silver</item>
+        <item>Red</item>
+        <item>Yellow</item>
+        <item>Green</item>
+        <item>Aqua</item>
+        <item>Orange</item>
+        <item>Purple</item>
+    </string-array>
+
+    <!-- foreground color values array -->
+    <string-array name="three_buttons_color_values">
+        <item>#C0C0C0</item>
+        <item>#FF0000</item>
+        <item>#FFFF00</item>
+        <item>#00FF00</item>
+        <item>#00FFFF</item>
+        <item>#FFA533</item>
+        <item>#FF00FF</item>
+    </string-array>
+
+
 
     <string-array name="multi_select_list_preference_default_value" />
 

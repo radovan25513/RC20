@@ -28,22 +28,28 @@ import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingleton.IOnActionOnTcp, SharedPreferences.OnSharedPreferenceChangeListener
+import static com.example.rc20.Utils.byteArrayOnlyZeros;
+
+public class FourButtonsActivity extends AppCompatActivity implements TcpSingleton.IOnActionOnTcp, SharedPreferences.OnSharedPreferenceChangeListener
 {
     private TcpSingleton sing;
     private Menu _menu;
     Button buttonA;
     Button buttonB;
     Button buttonC;
+    Button buttonD;
 
     SharedPreferences sharedPreferences;
     private byte[] buttonAMessage;
     private byte[] buttonBMessage;
     private byte[] buttonCMessage;
+    private byte[] buttonDMessage;
+
     private Toast _toast;
-    private ArrayList<Pair<Integer, Boolean>> incrementValueIndexA, incrementValueIndexB, incrementValueIndexC;
+    private ArrayList<Pair<Integer, Boolean>> incrementValueIndexA, incrementValueIndexB, incrementValueIndexC,incrementValueIndexD;
     private byte incrementForAck;
     private byte incrementForValue;
+
     Handler mHandler;
 
     Handler dimmerHandler;
@@ -53,7 +59,32 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(null);
-        setContentView(R.layout.activity_three_buttons);
+        setContentView(R.layout.activity_four_buttons);
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+
+
+        buttonA = findViewById(R.id.buttonA);
+        buttonB = findViewById(R.id.buttonB);
+        buttonC = findViewById(R.id.buttonC);
+        buttonD = findViewById(R.id.buttonD);
+
+
+        incrementValueIndexA = new ArrayList<Pair<Integer, Boolean>>();
+        incrementValueIndexB = new ArrayList<Pair<Integer, Boolean>>();
+        incrementValueIndexC = new ArrayList<Pair<Integer, Boolean>>();
+        incrementValueIndexD = new ArrayList<Pair<Integer, Boolean>>();
+
+        incrementForAck = 0x01;
+        incrementForValue = 0x01;
+
+
+        SetColorsAndLabelsOfButtons();
+
+
+
+
 
         mHandler = new Handler(Looper.getMainLooper()) {
             @Override
@@ -85,40 +116,8 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
             }
         };
 
-
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
         TcpSingleton.initContext(this);
         sing = TcpSingleton.getInstance(this, this, this, mHandler);
-
-        buttonA = findViewById(R.id.buttonA);
-        buttonB = findViewById(R.id.buttonB);
-        buttonC = findViewById(R.id.buttonC);
-
-
-        incrementValueIndexA = new ArrayList<Pair<Integer, Boolean>>();
-        incrementValueIndexB = new ArrayList<Pair<Integer, Boolean>>();
-        incrementValueIndexC = new ArrayList<Pair<Integer, Boolean>>();
-
-        incrementForAck = 0x01;
-        incrementForValue = 0x01;
-
-
-        SetColorsAndLabelsOfButtons();
-
-        if (sing.IsRunning())
-        {
-            buttonA.setEnabled(true);
-            buttonB.setEnabled(true);
-            buttonC.setEnabled(true);
-        }
-        else
-        {
-            buttonA.setEnabled(false);
-            buttonB.setEnabled(false);
-            buttonC.setEnabled(false);
-        }
-
 
         buttonA.setOnClickListener(new View.OnClickListener()
         {
@@ -211,6 +210,51 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
             }
         });
 
+        buttonD.setOnClickListener(new View.OnClickListener()
+        {
+            public void onClick(View v)
+            {
+                // Code here executes on main thread after user presses buttonA
+                if (sing != null && sing.IsRunning() && buttonDMessage.length != 0)
+                {
+                    for (Pair<Integer, Boolean> iter : incrementValueIndexD)
+                    {
+                        if (iter.second == true)
+                        {
+                            buttonDMessage[iter.first] = incrementForAck;
+                            incrementForAck++;
+                        }
+                        else
+                        {
+                            buttonDMessage[iter.first] = incrementForValue;
+                            incrementForValue++;
+                        }
+                    }
+
+                    sing.sendMsg(buttonDMessage);
+                }
+                else
+                {
+                    //ShowToasMessage("Connect to server first.");
+                }
+            }
+        });
+
+        if (sing.IsRunning())
+        {
+            buttonA.setEnabled(true);
+            buttonB.setEnabled(true);
+            buttonC.setEnabled(true);
+            buttonD.setEnabled(true);
+        }
+        else
+        {
+            buttonA.setEnabled(false);
+            buttonB.setEnabled(false);
+            buttonC.setEnabled(false);
+            buttonD.setEnabled(false);
+        }
+
         dimmerHandler = new Handler();
         dimmerRunable = new Runnable() {
 
@@ -238,27 +282,30 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
 
     private void SetColorsAndLabelsOfButtons()
     {
-        String buttonAColor = Objects.requireNonNull(sharedPreferences.getString("list_pref_three_first_button_color", "#FFFFFF"));
-        String buttonBColor = Objects.requireNonNull(sharedPreferences.getString("list_pref_three_second_button_color", "#FFFFFF"));
-        String buttonCColor = Objects.requireNonNull(sharedPreferences.getString("list_pref_three_third_button_color", "#FFFFFF"));
+        String buttonAColor = Objects.requireNonNull(sharedPreferences.getString("list_pref_four_first_button_color", "#FFFFFF"));
+        String buttonBColor = Objects.requireNonNull(sharedPreferences.getString("list_pref_four_second_button_color", "#FFFFFF"));
+        String buttonCColor = Objects.requireNonNull(sharedPreferences.getString("list_pref_four_third_button_color", "#FFFFFF"));
+        String buttonDColor = Objects.requireNonNull(sharedPreferences.getString("list_pref_four_fourth_button_color", "#FFFFFF"));
 
         buttonA.setBackgroundColor(Color.parseColor(buttonAColor));
         buttonB.setBackgroundColor(Color.parseColor(buttonBColor));
         buttonC.setBackgroundColor(Color.parseColor(buttonCColor));
+        buttonD.setBackgroundColor(Color.parseColor(buttonDColor));
 
-        String buttonALabel = Objects.requireNonNull(sharedPreferences.getString("edit_text_three_first_button_text", "ButtonA"));
-        String buttonBLabel = Objects.requireNonNull(sharedPreferences.getString("edit_text_three_second_button_text", "ButtonB"));
-        String buttonCLabel = Objects.requireNonNull(sharedPreferences.getString("edit_text_three_third_button_text", "ButtonC"));
+        String buttonALabel = Objects.requireNonNull(sharedPreferences.getString("edit_text_four_first_button_text", "ButtonA"));
+        String buttonBLabel = Objects.requireNonNull(sharedPreferences.getString("edit_text_four_second_button_text", "ButtonB"));
+        String buttonCLabel = Objects.requireNonNull(sharedPreferences.getString("edit_text_four_third_button_text", "ButtonC"));
+        String buttonDLabel = Objects.requireNonNull(sharedPreferences.getString("edit_text_four_fourth_button_text", "ButtonD"));
 
         buttonA.setText(buttonALabel);
         buttonB.setText(buttonBLabel);
         buttonC.setText(buttonCLabel);
+        buttonD.setText(buttonDLabel);
 
 
         try
         {
-            incrementValueIndexA.clear();
-            buttonAMessage = ParseMessageFromSettingsWithIncementPosition(Objects.requireNonNull(sharedPreferences.getString("edit_text_three_first_button_message", "14 02 02 01")), "A");
+            buttonAMessage = ParseMessageFromSettingsWithIncementPosition(Objects.requireNonNull(sharedPreferences.getString("edit_text_four_first_button_message", "14 02 02 01")), "A");
         }
         catch (Exception e)
         {
@@ -270,8 +317,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
 
         try
         {
-            incrementValueIndexB.clear();
-            buttonBMessage = ParseMessageFromSettingsWithIncementPosition(Objects.requireNonNull(sharedPreferences.getString("edit_text_three_second_button_message", "14 02 02 01")), "B");
+            buttonBMessage = ParseMessageFromSettingsWithIncementPosition(Objects.requireNonNull(sharedPreferences.getString("edit_text_four_second_button_message", "14 02 02 01")), "B");
         }
         catch (Exception e)
         {
@@ -283,8 +329,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
 
         try
         {
-            incrementValueIndexC.clear();
-            buttonCMessage = ParseMessageFromSettingsWithIncementPosition(Objects.requireNonNull(sharedPreferences.getString("edit_text_three_third_button_message", "14 02 02 01")), "C");
+            buttonCMessage = ParseMessageFromSettingsWithIncementPosition(Objects.requireNonNull(sharedPreferences.getString("edit_text_four_third_button_message", "14 02 02 01")), "C");
         }
         catch (Exception e)
         {
@@ -292,24 +337,18 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
             incrementValueIndexC.add(new Pair<Integer, Boolean>(14, true));
             buttonCMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x03, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
-    }
 
-    private void stopHandler() {
-        dimmerHandler.removeCallbacks(dimmerRunable);
-    }
-    private void startHandler() {
-        dimmerHandler.postDelayed(dimmerRunable, 8*1000); //for 5 minutes
-    }
 
-    @Override
-    public void onUserInteraction() {
-        // TODO Auto-generated method stub
-        super.onUserInteraction();
-
-        Utils.changeScreenBrightness(getApplicationContext(), 100);
-
-        stopHandler();//stop first and then start
-        startHandler();
+        try
+        {
+            buttonDMessage = ParseMessageFromSettingsWithIncementPosition(Objects.requireNonNull(sharedPreferences.getString("edit_text_four_fourth_button_message", "14 02 02 01")), "D");
+        }
+        catch (Exception e)
+        {
+            incrementValueIndexD.clear();
+            incrementValueIndexD.add(new Pair<Integer, Boolean>(14, true));
+            buttonDMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x04, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+        }
     }
 
     @Override
@@ -317,7 +356,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
     {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.commonmenus, menu);
-        MenuItem item = menu.findItem(R.id.menu_threeButtons);
+        MenuItem item = menu.findItem(R.id.menu_fourButtons);
         item.setEnabled(false);
         _menu = menu;
 
@@ -370,23 +409,21 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
         {
             Disconnect(true);
             startActivity(new Intent(this, MainActivity.class));
-
             finish();
         }
         else if (id == R.id.menu_twoButtons)
         {
             Disconnect(true);
             startActivity(new Intent(this, TwoButtonsActivity.class));
-
             finish();
         }
-        else if (id == R.id.menu_fourButtons)
+        else if (id == R.id.menu_threeButtons)
         {
             Disconnect(true);
-            startActivity(new Intent(this, FourButtonsActivity.class));
+            startActivity(new Intent(this, ThreeButtonsActivity.class));
             finish();
-
         }
+
         else if (id == R.id.menu_connection)
         {
             if (CheckImei())
@@ -399,6 +436,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
                     buttonA.setEnabled(true);
                     buttonB.setEnabled(true);
                     buttonC.setEnabled(true);
+                    buttonD.setEnabled(true);
                 }
                 else
                 {
@@ -408,6 +446,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
                     buttonA.setEnabled(false);
                     buttonB.setEnabled(false);
                     buttonC.setEnabled(false);
+                    buttonD.setEnabled(false);
                 }
             }
             else
@@ -501,27 +540,6 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
         startActivity(intent);
     }
 
-    public void ShowToasMessage(final String message)
-    {
-        runOnUiThread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                if (_toast != null)
-                {
-                    _toast.cancel();
-
-                    _toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-                }
-                else
-                {
-                    _toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-    }
-
     @Override
     public void onReceive(byte[] message)
     {
@@ -597,6 +615,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
                         buttonA.setEnabled(false);
                         buttonB.setEnabled(false);
                         buttonC.setEnabled(false);
+                        buttonD.setEnabled(false);
                     }
                 }
             }
@@ -621,6 +640,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
                         buttonA.setEnabled(true);
                         buttonB.setEnabled(true);
                         buttonC.setEnabled(true);
+                        buttonD.setEnabled(true);
                     }
                 }
             }
@@ -630,49 +650,67 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
-        if (key.equals("list_pref_three_first_button_color"))
+        if (key.equals("list_pref_four_first_button_color"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
             buttonA.setBackgroundColor(Color.parseColor(newValue));
         }
 
-        if (key.equals("list_pref_three_second_button_color"))
+        if (key.equals("list_pref_four_second_button_color"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
             buttonB.setBackgroundColor(Color.parseColor(newValue));
         }
 
-        if (key.equals("list_pref_three_third_button_color"))
+        if (key.equals("list_pref_four_third_button_color"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
             buttonC.setBackgroundColor(Color.parseColor(newValue));
         }
 
-        if (key.equals("edit_text_three_first_button_text"))
+        if (key.equals("list_pref_four_fourth_button_color"))
+        {
+            String newValue = sharedPreferences.getString(key, "");
+
+            buttonD.setBackgroundColor(Color.parseColor(newValue));
+        }
+
+
+
+        if (key.equals("edit_text_four_first_button_text"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
             buttonA.setText(newValue);
         }
 
-        if (key.equals("edit_text_three_second_button_text"))
+        if (key.equals("edit_text_four_second_button_text"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
             buttonB.setText(newValue);
         }
 
-        if (key.equals("edit_text_three_third_button_text"))
+        if (key.equals("edit_text_four_third_button_text"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
             buttonC.setText(newValue);
         }
 
-        if (key.equals("edit_text_three_first_button_message"))
+        if (key.equals("edit_text_four_fourth_button_text"))
+        {
+            String newValue = sharedPreferences.getString(key, "");
+
+            buttonD.setText(newValue);
+        }
+
+
+
+        if (key.equals("edit_text_four_first_button_message"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
@@ -689,7 +727,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
             }
         }
 
-        if (key.equals("edit_text_three_second_button_message"))
+        if (key.equals("edit_text_four_second_button_message"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
@@ -706,7 +744,7 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
             }
         }
 
-        if (key.equals("edit_text_three_third_button_message"))
+        if (key.equals("edit_text_four_third_button_message"))
         {
             String newValue = sharedPreferences.getString(key, "");
 
@@ -720,6 +758,23 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
                 incrementValueIndexC.clear();
                 incrementValueIndexC.add(new Pair<Integer, Boolean>(14, true));
                 buttonCMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x03, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+            }
+        }
+
+        if (key.equals("edit_text_four_fourth_button_message"))
+        {
+            String newValue = sharedPreferences.getString(key, "");
+
+            try
+            {
+                incrementValueIndexD.clear();
+                buttonDMessage = ParseMessageFromSettingsWithIncementPosition(newValue, "D");
+            }
+            catch (Exception e)
+            {
+                incrementValueIndexD.clear();
+                incrementValueIndexD.add(new Pair<Integer, Boolean>(14, true));
+                buttonDMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x04, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
             }
         }
     }
@@ -774,6 +829,19 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
 
                         data[i / 2] = (byte) 0xff;
                     }
+                    if (message.equals("D"))
+                    {
+                        if (data[i / 2 - 3] == 0x11 && data[i / 2 - 2] == 0x02 && data[i / 2 - 1] == 0x0a)
+                        {
+                            incrementValueIndexD.add(new Pair<Integer, Boolean>(i / 2, true));
+                        }
+                        else
+                        {
+                            incrementValueIndexD.add(new Pair<Integer, Boolean>(i / 2, false));
+                        }
+
+                        data[i / 2] = (byte) 0xff;
+                    }
                 }
                 else
                 {
@@ -792,6 +860,24 @@ public class ThreeButtonsActivity extends AppCompatActivity implements TcpSingle
 
             throw e;
         }
+    }
+
+    private void stopHandler() {
+        dimmerHandler.removeCallbacks(dimmerRunable);
+    }
+    private void startHandler() {
+        dimmerHandler.postDelayed(dimmerRunable, 8*1000); //for 5 minutes
+    }
+
+    @Override
+    public void onUserInteraction() {
+        // TODO Auto-generated method stub
+        super.onUserInteraction();
+
+        Utils.changeScreenBrightness(getApplicationContext(), 100);
+
+        stopHandler();//stop first and then start
+        startHandler();
     }
 }
 

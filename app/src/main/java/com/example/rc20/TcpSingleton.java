@@ -1,9 +1,10 @@
 package com.example.rc20;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 
 import java.io.DataInputStream;
@@ -12,6 +13,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class TcpSingleton
 {
@@ -27,6 +30,8 @@ public class TcpSingleton
     private static SharedPreferences sharedPreferences;
 
     private static Context _context;
+
+    private static Handler _mHandler;
 
     private TcpSingleton()
     {
@@ -46,6 +51,11 @@ public class TcpSingleton
         {
             tcpClient.Disconnect();
         }
+        else
+        {
+            tcpRunning = false;
+            _onDisconnectListener.onDisconnect();
+        }
     }
 
     public boolean IsRunning()
@@ -63,7 +73,7 @@ public class TcpSingleton
         void onConnect();
     }
 
-    static TcpSingleton getInstance(IOnActionOnTcp onReceiveListener, IOnActionOnTcp onDisconnectListener, IOnActionOnTcp onConnectListener)
+    static TcpSingleton getInstance(IOnActionOnTcp onReceiveListener, IOnActionOnTcp onDisconnectListener, IOnActionOnTcp onConnectListener, Handler mHandler)
     {
         if (tcpInstance == null)
         {
@@ -72,6 +82,7 @@ public class TcpSingleton
         _onReceiveListener = onReceiveListener;
         _onDisconnectListener = onDisconnectListener;
         _onConnectListener = onConnectListener;
+        _mHandler = mHandler;
 
         return tcpInstance;
     }
@@ -122,7 +133,13 @@ public class TcpSingleton
                 tcpRunning = true;
                 discFromUi = false;
 
-                _onConnectListener.onConnect();
+                if (_onConnectListener != null)
+                {
+                    _onConnectListener.onConnect();
+                    Message message = _mHandler.obtainMessage(1);
+                    message.sendToTarget();
+                }
+
 
                 while (tcpRunning)
                 {
@@ -164,25 +181,40 @@ public class TcpSingleton
             {
                 tcpRunning = false;
 
-                if (socket != null)
-                {
-                    socket.close();
-                }
 
+
+                if (in != null)
+                {
+                    in.close();
+                    in = null;
+                }
 
                 if (out != null)
                 {
                     out.flush();
                     out.close();
+                    out = null;
+                }
+
+                if (socket != null)
+                {
+                    socket.close();
+                    socket = null;
                 }
 
                 if (_onDisconnectListener != null)
                 {
                     _onDisconnectListener.onDisconnect();
+                    Message message = _mHandler.obtainMessage(0);
+                    message.sendToTarget();
                 }
+
+                if (tcpClient != null) tcpClient.cancel(true);
 
                 if (sharedPreferences.getBoolean("switch_autoconnect", true) && !discFromUi)
                 {
+                    tcpClient = null;
+                    //connectWithSleep();
                     Thread.sleep(4000);
                     Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))));
                 }
@@ -192,12 +224,30 @@ public class TcpSingleton
                     tcpClient = null;
                 }
             }
-            catch (IOException | InterruptedException e)
+            catch (IOException e)
             {
                 e.printStackTrace();
 
+
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
                 Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))));
             }
+        }
+
+        private void connectWithSleep()
+        {
+            final Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))));
+
+                        timer.cancel();
+                }
+            }, 4000, 1000);
         }
 
         private void sendMessage(final byte[] message)
@@ -213,6 +263,10 @@ public class TcpSingleton
                 {
                     e.printStackTrace();
                 }
+            }
+            else
+            {
+               // Disconnect();
             }
         }
     }

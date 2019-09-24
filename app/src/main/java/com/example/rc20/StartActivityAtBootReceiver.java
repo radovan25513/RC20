@@ -1,8 +1,8 @@
+package com.example.rc20;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
-import com.example.rc20.MainActivity;
 
 public class StartActivityAtBootReceiver extends BroadcastReceiver
 {

@@ -9,9 +9,10 @@
         android:id="@+id/buttonA"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:text="Button"
+        android:text="ButtonA"
         android:textSize="45dp"
         android:layout_weight="1"
+        android:layout_marginBottom="10dp"
         android:layout_marginTop="10dp"
         android:layout_marginRight="10dp"
         android:layout_marginLeft="10dp"/>
@@ -21,23 +22,10 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:textSize="45dp"
-        android:text="Button"
-        android:layout_weight="1"
-        android:layout_marginTop="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginLeft="10dp"/>
-
-    <Button
-        android:id="@+id/buttonC"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:textSize="45dp"
-        android:text="Button"
+        android:text="ButtonB"
         android:layout_weight="1"
         android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
         android:layout_marginRight="10dp"
         android:layout_marginLeft="10dp"/>
-
 
 </LinearLayout>

@@ -43,109 +43,297 @@
         android:summary="Device imei"
         android:title="Imei"
         app:iconSpaceReserved="false" />
-    <PreferenceCategory android:title="One button settings">
 
+
+
+
+
+    <PreferenceCategory android:title="One button settings">
+        <ListPreference
+            android:defaultValue="#C0C0C0"
+            android:entries="@array/buttons_color_names"
+            android:entryValues="@array/buttons_color_values"
+            android:key="list_pref_one_button_color"
+            android:summary="Select color for button"
+            android:title="Button color"
+            app:iconSpaceReserved="false" />
         <EditTextPreference
-            android:defaultValue="1"
-            android:digits="0123456789"
-            android:inputType="number"
-            android:key="edit_text_rc_id"
+            android:defaultValue="Button"
+            android:inputType="text"
+            android:key="edit_text_one_button_text"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:summary="Rem. conttroller ID"
-            android:title="Single mode rc id"
+            android:title="Button text"
+            app:iconSpaceReserved="false" />
+        <EditTextPreference
+            android:defaultValue="80 02 00 0b 14 02 02 01 11 01 03 11 02 0A xx"
+            android:inputType="text"
+            android:key="edit_text_one_button_message"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Button message"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Three buttons settings">
-        <PreferenceCategory android:title="First button">
 
+
+
+
+
+    <PreferenceCategory android:title="Two buttons settings">
+        <PreferenceCategory android:title="First button">
             <ListPreference
                 android:defaultValue="#C0C0C0"
-                android:entries="@array/three_buttons_color_names"
-                android:entryValues="@array/three_buttons_color_values"
-                android:key="list_pref_three_first_button_color"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
+                android:key="list_pref_two_first_button_color"
                 android:summary="Select color for first button"
                 android:title="First button color"
                 app:iconSpaceReserved="false" />
             <EditTextPreference
-                android:defaultValue="ButtonA"
+                android:defaultValue="Button A"
                 android:inputType="text"
-                android:key="edit_text_first_button_text"
+                android:key="list_pref_two_first_button_text"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
                 android:title="First button text"
                 app:iconSpaceReserved="false" />
             <EditTextPreference
-                android:defaultValue="14 02 02 01 11 01 01 xx"
+                android:defaultValue="80 02 00 0b 14 02 02 01 11 01 03 11 02 0A xx"
                 android:inputType="text"
-                android:key="edit_text_first_button_message"
+                android:key="list_pref_two_first_button_message"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
                 android:title="First button message"
                 app:iconSpaceReserved="false" />
         </PreferenceCategory>
-        <PreferenceCategory android:title="Second button">
 
+        <PreferenceCategory android:title="Second button">
             <ListPreference
                 android:defaultValue="#C0C0C0"
-                android:entries="@array/three_buttons_color_names"
-                android:entryValues="@array/three_buttons_color_values"
-                android:key="list_pref_three_second_button_color"
-                android:summary="Select color for second button"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
+                android:key="list_pref_two_second_button_color"
+                android:summary="Select color for first button"
                 android:title="Second button color"
                 app:iconSpaceReserved="false" />
             <EditTextPreference
-                android:defaultValue="ButtonB"
+                android:defaultValue="Button B"
                 android:inputType="text"
-                android:key="edit_text_second_button_text"
+                android:key="list_pref_two_second_button_text"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
                 android:title="Second button text"
                 app:iconSpaceReserved="false" />
             <EditTextPreference
-                android:defaultValue="14 02 02 01"
+                android:defaultValue="80 02 00 0b 14 02 02 02 11 01 03 11 02 0A xx"
                 android:inputType="text"
-                android:key="edit_text_second_button_message"
+                android:key="list_pref_two_second_button_message"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="Second button message"
+                app:iconSpaceReserved="false" />
+        </PreferenceCategory>
+    </PreferenceCategory>
+
+
+
+
+
+    <PreferenceCategory android:title="Three buttons settings">
+        <PreferenceCategory android:title="First button">
+            <ListPreference
+                android:defaultValue="#C0C0C0"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
+                android:key="list_pref_three_first_button_color"
+                android:summary="Select color for first button"
+                android:title="First button color"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="Button A"
+                android:inputType="text"
+                android:key="edit_text_three_first_button_text"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="First button text"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="80 02 00 0b 14 02 02 01 11 01 03 11 02 0A xx"
+                android:inputType="text"
+                android:key="edit_text_three_first_button_message"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="First button message"
+                app:iconSpaceReserved="false" />
+        </PreferenceCategory>
+
+        <PreferenceCategory android:title="Second button">
+            <ListPreference
+                android:defaultValue="#C0C0C0"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
+                android:key="list_pref_three_second_button_color"
+                android:summary="Select color for second button"
+                android:title="Second button color"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="Button B"
+                android:inputType="text"
+                android:key="edit_text_three_second_button_text"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="Second button text"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="80 02 00 0b 14 02 02 02 11 01 03 11 02 0A xx"
+                android:inputType="text"
+                android:key="edit_text_three_second_button_message"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
                 android:title="Second button message"
                 app:iconSpaceReserved="false" />
         </PreferenceCategory>
 
-
         <PreferenceCategory android:title="Third button">
-
             <ListPreference
                 android:defaultValue="#C0C0C0"
-                android:entries="@array/three_buttons_color_names"
-                android:entryValues="@array/three_buttons_color_values"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
                 android:key="list_pref_three_third_button_color"
                 android:summary="Select color for third button"
                 android:title="Third button color"
                 app:iconSpaceReserved="false" />
             <EditTextPreference
-                android:defaultValue="ButtonC"
+                android:defaultValue="Button C"
                 android:inputType="text"
-                android:key="edit_text_third_button_text"
+                android:key="edit_text_three_third_button_text"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
                 android:title="Third button text"
                 app:iconSpaceReserved="false" />
             <EditTextPreference
-                android:defaultValue="14 02 02 01"
+                android:defaultValue="80 02 00 0b 14 02 02 03 11 01 03 11 02 0A xx"
                 android:inputType="text"
-                android:key="edit_text_third_button_message"
+                android:key="edit_text_three_third_button_message"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="Third button message"
+                app:iconSpaceReserved="false" />
+        </PreferenceCategory>
+    </PreferenceCategory>
+
+
+
+
+    <PreferenceCategory android:title="Fourth buttons settings">
+        <PreferenceCategory android:title="First button">
+            <ListPreference
+                android:defaultValue="#C0C0C0"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
+                android:key="list_pref_four_first_button_color"
+                android:summary="Select color for first button"
+                android:title="First button color"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="Button A"
+                android:inputType="text"
+                android:key="edit_text_four_first_button_text"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="First button text"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="80 02 00 0b 14 02 02 01 11 01 03 11 02 0A xx"
+                android:inputType="text"
+                android:key="edit_text_four_first_button_message"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="First button message"
+                app:iconSpaceReserved="false" />
+        </PreferenceCategory>
+
+        <PreferenceCategory android:title="Second button">
+            <ListPreference
+                android:defaultValue="#C0C0C0"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
+                android:key="list_pref_four_second_button_color"
+                android:summary="Select color for second button"
+                android:title="Second button color"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="Button B"
+                android:inputType="text"
+                android:key="edit_text_four_second_button_text"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="Second button text"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="80 02 00 0b 14 02 02 02 11 01 03 11 02 0A xx"
+                android:inputType="text"
+                android:key="edit_text_four_second_button_message"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="Second button message"
+                app:iconSpaceReserved="false" />
+        </PreferenceCategory>
+
+        <PreferenceCategory android:title="Third button">
+            <ListPreference
+                android:defaultValue="#C0C0C0"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
+                android:key="list_pref_four_third_button_color"
+                android:summary="Select color for third button"
+                android:title="Third button color"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="Button C"
+                android:inputType="text"
+                android:key="edit_text_four_third_button_text"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="Third button text"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="80 02 00 0b 14 02 02 03 11 01 03 11 02 0A xx"
+                android:inputType="text"
+                android:key="edit_text_four_third_button_message"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
                 android:title="Third button message"
                 app:iconSpaceReserved="false" />
         </PreferenceCategory>
 
-
-    </PreferenceCategory>
-    <PreferenceCategory android:title="Fourth buttons settings">
-
+        <PreferenceCategory android:title="Fourth button">
+            <ListPreference
+                android:defaultValue="#C0C0C0"
+                android:entries="@array/buttons_color_names"
+                android:entryValues="@array/buttons_color_values"
+                android:key="list_pref_four_fourth_button_color"
+                android:summary="Select color for fourth button"
+                android:title="Fourth button color"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="Button D"
+                android:inputType="text"
+                android:key="edit_text_four_fourth_button_text"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="Fourth button text"
+                app:iconSpaceReserved="false" />
+            <EditTextPreference
+                android:defaultValue="80 02 00 0b 14 02 02 04 11 01 03 11 02 0A xx"
+                android:inputType="text"
+                android:key="edit_text_four_fourth_button_message"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:title="Fourth button message"
+                app:iconSpaceReserved="false" />
+        </PreferenceCategory>
     </PreferenceCategory>
 
 </PreferenceScreen>

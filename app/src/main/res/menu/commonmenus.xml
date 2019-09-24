@@ -17,6 +17,10 @@
         android:title="One button"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_twoButtons"
+        android:title="Two buttons"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_threeButtons"
         android:title="Three buttons" />
     <item

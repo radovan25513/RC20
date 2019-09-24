@@ -38,9 +38,9 @@ import java.util.Objects;
 
 import static com.example.rc20.Utils.byteArrayOnlyZeros;
 
-public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnActionOnTcp, SharedPreferences.OnSharedPreferenceChangeListener
+public class MainActivity extends AppCompatActivity implements TcpObject.IOnActionOnTcp, SharedPreferences.OnSharedPreferenceChangeListener
 {
-    private TcpSingleton sing;
+    private TcpObject _tcpObj;
     static SharedPreferences sharedPreferences;
 
     private int _port;
@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
 
     Handler dimmerHandler;
     Runnable dimmerRunable;
+    private String _userPassword;
+    private int _dimmerTimeout;
 
 
     @Override
@@ -81,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         TedPermission.with(this)
                 .setPermissionListener(permissionlistener)
                 .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
-                .setPermissions(Manifest.permission.READ_PHONE_STATE, Manifest.permission.INTERNET, Manifest.permission.RECEIVE_BOOT_COMPLETED, Manifest.permission.WRITE_SETTINGS)
+                .setPermissions(Manifest.permission.READ_PHONE_STATE, Manifest.permission.INTERNET, Manifest.permission.RECEIVE_BOOT_COMPLETED)
                 .check();
 
 
@@ -128,16 +130,15 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
 
 
         buttonA = findViewById(R.id.singleButton);
-        incrementValueIndexA = new ArrayList<Pair<Integer, Boolean>>();
+        incrementValueIndexA = new ArrayList<>();
         incrementForAck = 0x01;
         incrementForValue = 0x01;
 
         SetColorsAndLabelsOfButtons();
 
-        TcpSingleton.initContext(this);
-        sing = TcpSingleton.getInstance(this, this, this, mHandler);
+        _tcpObj = new TcpObject(this, this, this, mHandler, this);
 
-        if (sing.IsRunning())
+        if (_tcpObj.IsRunning())
         {
             buttonA.setEnabled(true);
         }
@@ -153,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
             {
                 // Code here executes on main thread after user presses buttonA
 
-                if (sing != null && sing.IsRunning() && buttonAMessage.length != 0)
+                if (_tcpObj != null && _tcpObj.IsRunning() && buttonAMessage.length != 0)
                 {
                     for (Pair<Integer, Boolean> iter : incrementValueIndexA)
                     {
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
                         }
                     }
 
-                    sing.sendMsg(buttonAMessage);
+                    _tcpObj.sendMsg(buttonAMessage);
                 }
             }
         });
@@ -195,10 +196,12 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         }
 
         dimmerHandler = new Handler();
-        dimmerRunable = new Runnable() {
+        dimmerRunable = new Runnable()
+        {
 
             @Override
-            public void run() {
+            public void run()
+            {
                 // TODO Auto-generated method stub
                 //Toast.makeText(MainActivity.this, "user is inactive from last 5 minutes",Toast.LENGTH_SHORT).show();
 
@@ -209,25 +212,32 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
                 boolean settingsCanWrite = Utils.hasWriteSettingsPermission(context);
 
                 // If do not have then open the Can modify system settings panel.
-                if(!settingsCanWrite) {
+                if (!settingsCanWrite)
+                {
                     Utils.changeWriteSettingsPermission(context);
-                }else {
-                    Utils.changeScreenBrightness(context, 20);
+                }
+                else
+                {
+                    Utils.changeScreenBrightness(context, 10);
                 }
             }
         };
         startHandler();
     }
 
-    private void stopHandler() {
+    private void stopHandler()
+    {
         dimmerHandler.removeCallbacks(dimmerRunable);
     }
-    private void startHandler() {
-        dimmerHandler.postDelayed(dimmerRunable, 8*1000); //for 5 minutes
+
+    private void startHandler()
+    {
+        dimmerHandler.postDelayed(dimmerRunable, _dimmerTimeout); //for 5 minutes
     }
 
     @Override
-    public void onUserInteraction() {
+    public void onUserInteraction()
+    {
         // TODO Auto-generated method stub
         super.onUserInteraction();
 
@@ -257,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         {
             incrementValueIndexA.clear();
             incrementValueIndexA.add(new Pair<Integer, Boolean>(14, true));
-            buttonAMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+            buttonAMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
     }
 
@@ -277,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
 
         _menu = menu;
 
-        if (sing.IsRunning())
+        if (_tcpObj.IsRunning())
         {
             item = menu.findItem(R.id.menu_connection);
             item.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_action_connected));
@@ -286,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         return true;
     }
 
-    private void showSettingsInputDialog(final boolean fromBoot)
+    private void showSettingsInputDialog()
     {
         // get prompts.xml view
         LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
@@ -305,30 +315,15 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
             {
                 String inputPass = editText.getText().toString();
 
-                if (fromBoot)
+                if (inputPass.equals("Fiskijeladyboy123") || inputPass.equals(_userPassword) || inputPass.equals("radko"))
                 {
-                    if (inputPass.equals("superceit"))
+                    if (inputPass.equals("radko") || inputPass.equals("Fiskijeladyboy123"))
                     {
                         startSettingsActivity(false);
                     }
                     else
                     {
-                        finish();
-                        System.exit(0);
-                    }
-                }
-                else
-                {
-                    if (inputPass.equals("Fiskijeladyboy123") || inputPass.equals("superceit") || inputPass.equals("radko"))
-                    {
-                        if (inputPass.equals("superceit"))
-                        {
-                            startSettingsActivity(false);
-                        }
-                        else
-                        {
-                            startSettingsActivity(true);
-                        }
+                        startSettingsActivity(true);
                     }
                 }
             }
@@ -337,15 +332,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        if (fromBoot)
-                        {
-                            finish();
-                            System.exit(0);
-                        }
-                        else
-                        {
-                            dialog.cancel();
-                        }
+                        dialog.cancel();
                     }
                 });
 
@@ -419,11 +406,11 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
 
         if (id == R.id.menu_settings)
         {
-            showSettingsInputDialog(false);
+            showSettingsInputDialog();
         }
         else if (id == R.id.menu_oneButton)
         {
-            //startActivity(new Intent(this, MainActivity.class));
+            startActivity(new Intent(this, MainActivity.class));
         }
         else if (id == R.id.menu_twoButtons)
         {
@@ -444,7 +431,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         {
             if (CheckImei())
             {
-                if (sing == null || !sing.IsRunning())
+                if (_tcpObj == null || !_tcpObj.IsRunning())
                 {
                     Connect();
                     item.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_action_connected));
@@ -472,7 +459,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
 
     private void Connect()
     {
-        TcpSingleton.Connect(GetAddress(), GetPort());
+        _tcpObj.Connect(GetAddress(), GetPort(), false);
     }
 
 
@@ -555,7 +542,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
 
     private void Disconnect(boolean fromUi)
     {
-        TcpSingleton.Disconnect(fromUi);
+        _tcpObj.Disconnect(fromUi);
     }
 
     @Override
@@ -578,9 +565,17 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
     protected void onResume()
     {
         super.onResume();
-        TcpSingleton.initContext(this);
-        sing = TcpSingleton.getInstance(this, this, this, mHandler);
+
+        //_tcpObj.getInstance(this, this, this, mHandler);
         sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+
+        if (_toast != null) _toast.cancel();
     }
 
     @Override
@@ -661,6 +656,10 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
         _reconnect = sharedPreferences.getBoolean("switch_autoconnect", true);
 
         _idOfStartingActivity = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("list_pref_starting_activity", "1")));
+
+        _userPassword = Objects.requireNonNull(sharedPreferences.getString("edit_text_user_password", "user"));
+
+        _dimmerTimeout = 1000 * Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("list_pref_dimmer_time", "120")));
     }
 
     @Override
@@ -680,6 +679,20 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
             buttonA.setText(newValue);
         }
 
+        if (key.equals("edit_text_user_password"))
+        {
+            String newValue = sharedPreferences.getString(key, "user");
+
+            _userPassword = newValue;
+        }
+
+        if (key.equals("list_pref_dimmer_time"))
+        {
+            String newValue = sharedPreferences.getString(key, "120");
+
+            _dimmerTimeout = 1000 * Integer.parseInt(Objects.requireNonNull(newValue));
+        }
+
         if (key.equals("edit_text_one_button_message"))
         {
             String newValue = sharedPreferences.getString(key, "");
@@ -693,7 +706,7 @@ public class MainActivity extends AppCompatActivity implements TcpSingleton.IOnA
             {
                 incrementValueIndexA.clear();
                 incrementValueIndexA.add(new Pair<Integer, Boolean>(14, true));
-                buttonAMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+                buttonAMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
             }
         }
     }

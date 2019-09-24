@@ -1,0 +1,55 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <EditTextPreference
+        android:defaultValue="192.168.1.1"
+        android:inputType="text"
+        android:key="edit_text_address"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="Ip address of server"
+        android:title="Ip address"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="9750"
+        android:digits="0123456789"
+        android:inputType="number"
+        android:key="edit_text_port"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="Port on Tcp comm"
+        android:title="Port"
+        app:iconSpaceReserved="false" />
+    <ListPreference
+        android:defaultValue="1"
+        android:entries="@array/starting_activity_names_array"
+        android:entryValues="@array/starting_activity_values_array"
+        android:inputType="number"
+        android:key="list_pref_starting_activity"
+        android:summary="Select a starting screen"
+        android:title="Starting activity"
+        app:iconSpaceReserved="false" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="switch_autoconnect"
+        android:title="Reconnect automatically"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="353748087140429"
+        android:inputType="text"
+        android:key="edit_text_imei"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="Device imei"
+        android:title="Imei"
+        app:iconSpaceReserved="false" />
+
+    <EditTextPreference
+        android:defaultValue="user"
+        android:inputType="text"
+        android:key="edit_text_user_password"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="User password"
+        app:iconSpaceReserved="false" />
+</PreferenceScreen>

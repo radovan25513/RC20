@@ -148,11 +148,11 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
         {
             if (normalSettings)
             {
-                setPreferencesFromResource(R.xml.normal_preferences, rootKey);
+                setPreferencesFromResource(R.xml.user_preferences, rootKey);
             }
             else
             {
-                setPreferencesFromResource(R.xml.hidden_preferences, rootKey);
+                setPreferencesFromResource(R.xml.admin_preferences, rootKey);
             }
         }
     }

@@ -16,35 +16,39 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class TcpSingleton
+public class TcpObject
 {
-    private static TcpSingleton tcpInstance = null;
-    private static IOnActionOnTcp _onReceiveListener = null;
-    private static IOnActionOnTcp _onDisconnectListener = null;
-    private static IOnActionOnTcp _onConnectListener = null;
+    private IOnActionOnTcp _onReceiveListener;
+    private IOnActionOnTcp _onDisconnectListener;
+    private IOnActionOnTcp _onConnectListener;
 
-    public static boolean tcpRunning = false;
-    private static boolean discFromUi = false;
-    private static TcpClient tcpClient;
+    private boolean tcpRunning = false;
+    private boolean discFromUi = false;
+    private TcpClient tcpClient;
 
-    private static SharedPreferences sharedPreferences;
+    private SharedPreferences sharedPreferences;
 
-    private static Context _context;
+    private Context _context;
 
-    private static Handler _mHandler;
+    private Handler _mHandler;
 
-    private TcpSingleton()
+    TcpObject(IOnActionOnTcp onReceiveListener, IOnActionOnTcp onDisconnectListener, IOnActionOnTcp onConnectListener, Handler mHandler, Context context)
     {
-        tcpInstance = this;
+        _onReceiveListener = onReceiveListener;
+        _onDisconnectListener = onDisconnectListener;
+        _onConnectListener = onConnectListener;
+        _mHandler = mHandler;
+        _context = context;
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(_context);
     }
 
-    public static void initContext(Context context)
+    public void initContext(Context context)
     {
         _context = context;
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(_context);
     }
 
-    public static void Disconnect(boolean b)
+    public void Disconnect(boolean b)
     {
         discFromUi = b;
         if (tcpClient != null)
@@ -73,24 +77,24 @@ public class TcpSingleton
         void onConnect();
     }
 
-    static TcpSingleton getInstance(IOnActionOnTcp onReceiveListener, IOnActionOnTcp onDisconnectListener, IOnActionOnTcp onConnectListener, Handler mHandler)
-    {
-        if (tcpInstance == null)
-        {
-            tcpInstance = new TcpSingleton();
-        }
-        _onReceiveListener = onReceiveListener;
-        _onDisconnectListener = onDisconnectListener;
-        _onConnectListener = onConnectListener;
-        _mHandler = mHandler;
+//     TcpObject getInstance(IOnActionOnTcp onReceiveListener, IOnActionOnTcp onDisconnectListener, IOnActionOnTcp onConnectListener, Handler mHandler)
+//    {
+//        if (tcpInstance == null)
+//        {
+//            tcpInstance = new TcpObject();
+//        }
+//        _onReceiveListener = onReceiveListener;
+//        _onDisconnectListener = onDisconnectListener;
+//        _onConnectListener = onConnectListener;
+//        _mHandler = mHandler;
+//
+//        return tcpInstance;
+//    }
 
-        return tcpInstance;
-    }
-
-    public static void Connect(String _ip, int _port)
+    public void Connect(String _ip, int _port, boolean reconnect)
     {
         tcpClient = new TcpClient(_ip, _port);
-        tcpClient.execute();
+        tcpClient.execute(reconnect);
     }
 
 
@@ -99,7 +103,7 @@ public class TcpSingleton
         tcpClient.sendMessage(message);
     }
 
-    private static class TcpClient extends AsyncTask<Void, String, Void>
+    private class TcpClient extends AsyncTask<Boolean, String, Void>
     {
         String dstAddress;
         int dstPort;
@@ -119,13 +123,29 @@ public class TcpSingleton
 
 
         @Override
-        protected Void doInBackground(Void... arg0)
+        protected Void doInBackground(Boolean... booleans)
         {
             try
             {
+                Boolean isReconnected = false;
+                isReconnected = booleans[0];
+
+                if (isReconnected)
+                {
+                    try
+                    {
+                        Thread.sleep(5000);
+                    }
+                    catch (InterruptedException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+
+
                 InetSocketAddress sockAdr = new InetSocketAddress(dstAddress, dstPort);
                 socket = new Socket();
-                int timeout = 1000;
+                int timeout = 7000;
                 socket.connect(sockAdr, timeout);
                 in = new DataInputStream(socket.getInputStream());
                 out = new DataOutputStream(socket.getOutputStream());
@@ -182,7 +202,6 @@ public class TcpSingleton
                 tcpRunning = false;
 
 
-
                 if (in != null)
                 {
                     in.close();
@@ -215,39 +234,17 @@ public class TcpSingleton
                 {
                     tcpClient = null;
                     //connectWithSleep();
-                    Thread.sleep(4000);
-                    Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))));
+                    //Thread.sleep(4000);
+                    Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))), true);
                 }
                 else
                 {
-                    //tcpInstance = null;
-                    tcpClient = null;
                 }
             }
             catch (IOException e)
             {
                 e.printStackTrace();
-
-
             }
-            catch (InterruptedException e)
-            {
-                e.printStackTrace();
-                Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))));
-            }
-        }
-
-        private void connectWithSleep()
-        {
-            final Timer timer = new Timer();
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    Connect(Objects.requireNonNull(sharedPreferences.getString("edit_text_address", "192.168.200.187")), Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("edit_text_port", "9750"))));
-
-                        timer.cancel();
-                }
-            }, 4000, 1000);
         }
 
         private void sendMessage(final byte[] message)
@@ -266,7 +263,7 @@ public class TcpSingleton
             }
             else
             {
-               // Disconnect();
+                // Disconnect();
             }
         }
     }

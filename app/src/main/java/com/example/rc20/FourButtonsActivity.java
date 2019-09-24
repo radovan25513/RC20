@@ -5,13 +5,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,11 +26,9 @@ import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import static com.example.rc20.Utils.byteArrayOnlyZeros;
-
-public class FourButtonsActivity extends AppCompatActivity implements TcpSingleton.IOnActionOnTcp, SharedPreferences.OnSharedPreferenceChangeListener
+public class FourButtonsActivity extends AppCompatActivity implements TcpObject.IOnActionOnTcp, SharedPreferences.OnSharedPreferenceChangeListener
 {
-    private TcpSingleton sing;
+    private TcpObject _tcpObj;
     private Menu _menu;
     Button buttonA;
     Button buttonB;
@@ -54,6 +50,9 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
 
     Handler dimmerHandler;
     Runnable dimmerRunable;
+
+    private String _userPassword;
+    private int _dimmerTimeout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -116,8 +115,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
             }
         };
 
-        TcpSingleton.initContext(this);
-        sing = TcpSingleton.getInstance(this, this, this, mHandler);
+        _tcpObj = new TcpObject(this, this, this, mHandler, this);
 
         buttonA.setOnClickListener(new View.OnClickListener()
         {
@@ -125,7 +123,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
             {
                 // Code here executes on main thread after user presses buttonA
 
-                if (sing != null && sing.IsRunning() && buttonAMessage.length != 0)
+                if (_tcpObj != null && _tcpObj.IsRunning() && buttonAMessage.length != 0)
                 {
                     for (Pair<Integer, Boolean> iter : incrementValueIndexA)
                     {
@@ -141,7 +139,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
                         }
                     }
 
-                    sing.sendMsg(buttonAMessage);
+                    _tcpObj.sendMsg(buttonAMessage);
                 }
                 else
                 {
@@ -155,7 +153,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
             public void onClick(View v)
             {
                 // Code here executes on main thread after user presses buttonA
-                if (sing != null && sing.IsRunning() && buttonBMessage.length != 0)
+                if (_tcpObj != null && _tcpObj.IsRunning() && buttonBMessage.length != 0)
                 {
                     for (Pair<Integer, Boolean> iter : incrementValueIndexB)
                     {
@@ -171,7 +169,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
                         }
                     }
 
-                    sing.sendMsg(buttonBMessage);
+                    _tcpObj.sendMsg(buttonBMessage);
                 }
                 else
                 {
@@ -185,7 +183,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
             public void onClick(View v)
             {
                 // Code here executes on main thread after user presses buttonA
-                if (sing != null && sing.IsRunning() && buttonCMessage.length != 0)
+                if (_tcpObj != null && _tcpObj.IsRunning() && buttonCMessage.length != 0)
                 {
                     for (Pair<Integer, Boolean> iter : incrementValueIndexC)
                     {
@@ -201,7 +199,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
                         }
                     }
 
-                    sing.sendMsg(buttonCMessage);
+                    _tcpObj.sendMsg(buttonCMessage);
                 }
                 else
                 {
@@ -215,7 +213,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
             public void onClick(View v)
             {
                 // Code here executes on main thread after user presses buttonA
-                if (sing != null && sing.IsRunning() && buttonDMessage.length != 0)
+                if (_tcpObj != null && _tcpObj.IsRunning() && buttonDMessage.length != 0)
                 {
                     for (Pair<Integer, Boolean> iter : incrementValueIndexD)
                     {
@@ -231,7 +229,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
                         }
                     }
 
-                    sing.sendMsg(buttonDMessage);
+                    _tcpObj.sendMsg(buttonDMessage);
                 }
                 else
                 {
@@ -240,7 +238,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
             }
         });
 
-        if (sing.IsRunning())
+        if (_tcpObj.IsRunning())
         {
             buttonA.setEnabled(true);
             buttonB.setEnabled(true);
@@ -349,6 +347,11 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
             incrementValueIndexD.add(new Pair<Integer, Boolean>(14, true));
             buttonDMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x04, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
+
+
+        _userPassword = Objects.requireNonNull(sharedPreferences.getString("edit_text_user_password", "user"));
+
+        _dimmerTimeout = 1000 * Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("list_pref_dimmer_time", "120")));
     }
 
     @Override
@@ -360,7 +363,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
         item.setEnabled(false);
         _menu = menu;
 
-        if (sing.IsRunning())
+        if (_tcpObj.IsRunning())
         {
             item = menu.findItem(R.id.menu_connection);
             item.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_action_connected));
@@ -392,7 +395,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
     protected void onPause()
     {
         super.onPause();
-
+        if (_toast != null) _toast.cancel();
         //sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
     }
 
@@ -403,7 +406,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
 
         if (id == R.id.menu_settings)
         {
-            showSettingsInputDialog(false);
+            showSettingsInputDialog();
         }
         else if (id == R.id.menu_oneButton)
         {
@@ -428,7 +431,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
         {
             if (CheckImei())
             {
-                if (sing == null || !sing.IsRunning())
+                if (_tcpObj == null || !_tcpObj.IsRunning())
                 {
                     Connect();
                     item.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_action_connected));
@@ -461,7 +464,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
         return super.onOptionsItemSelected(item);
     }
 
-    private void showSettingsInputDialog(final boolean fromBoot)
+    private void showSettingsInputDialog()
     {
         // get prompts.xml view
         LayoutInflater layoutInflater = LayoutInflater.from(this);
@@ -480,30 +483,15 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
             {
                 String inputPass = editText.getText().toString();
 
-                if (fromBoot)
+                if (inputPass.equals("Fiskijeladyboy123") || inputPass.equals(_userPassword) || inputPass.equals("radko"))
                 {
-                    if (inputPass.equals("superceit"))
+                    if (inputPass.equals("radko") || inputPass.equals("Fiskijeladyboy123"))
                     {
                         startSettingsActivity(false);
                     }
                     else
                     {
-                        finish();
-                        System.exit(0);
-                    }
-                }
-                else
-                {
-                    if (inputPass.equals("Fiskijeladyboy123") || inputPass.equals("superceit") || inputPass.equals("radko"))
-                    {
-                        if (inputPass.equals("superceit"))
-                        {
-                            startSettingsActivity(false);
-                        }
-                        else
-                        {
-                            startSettingsActivity(true);
-                        }
+                        startSettingsActivity(true);
                     }
                 }
             }
@@ -512,15 +500,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        if (fromBoot)
-                        {
-                            finish();
-                            System.exit(0);
-                        }
-                        else
-                        {
-                            dialog.cancel();
-                        }
+                        dialog.cancel();
                     }
                 });
 
@@ -558,12 +538,12 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
 
     private void Connect()
     {
-        TcpSingleton.Connect(GetAddress(), GetPort());
+        _tcpObj.Connect(GetAddress(), GetPort(), false);
     }
 
     private void Disconnect(boolean fromUi)
     {
-        TcpSingleton.Disconnect(fromUi);
+        _tcpObj.Disconnect(fromUi);
     }
 
     private boolean byteArrayOnlyZeros(final byte[] array)
@@ -650,6 +630,23 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
+        if (key.equals("edit_text_user_password"))
+        {
+            String newValue = sharedPreferences.getString(key, "user");
+
+            _userPassword = newValue;
+        }
+
+        if (key.equals("list_pref_dimmer_time"))
+        {
+            String newValue = sharedPreferences.getString(key, "120");
+
+            _dimmerTimeout = 1000 * Integer.parseInt(Objects.requireNonNull(newValue));
+        }
+
+
+
+
         if (key.equals("list_pref_four_first_button_color"))
         {
             String newValue = sharedPreferences.getString(key, "");
@@ -862,15 +859,19 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpSinglet
         }
     }
 
-    private void stopHandler() {
+    private void stopHandler()
+    {
         dimmerHandler.removeCallbacks(dimmerRunable);
     }
-    private void startHandler() {
-        dimmerHandler.postDelayed(dimmerRunable, 8*1000); //for 5 minutes
+
+    private void startHandler()
+    {
+        dimmerHandler.postDelayed(dimmerRunable, _dimmerTimeout); //for 5 minutes
     }
 
     @Override
-    public void onUserInteraction() {
+    public void onUserInteraction()
+    {
         // TODO Auto-generated method stub
         super.onUserInteraction();
 

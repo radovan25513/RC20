@@ -42,7 +42,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
     private byte[] buttonDMessage;
 
     private Toast _toast;
-    private ArrayList<Pair<Integer, Boolean>> incrementValueIndexA, incrementValueIndexB, incrementValueIndexC,incrementValueIndexD;
+    private ArrayList<Pair<Integer, Boolean>> incrementValueIndexA, incrementValueIndexB, incrementValueIndexC, incrementValueIndexD;
     private byte incrementForAck;
     private byte incrementForValue;
 
@@ -63,7 +63,6 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
 
-
         buttonA = findViewById(R.id.buttonA);
         buttonB = findViewById(R.id.buttonB);
         buttonC = findViewById(R.id.buttonC);
@@ -82,12 +81,11 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         SetColorsAndLabelsOfButtons();
 
 
-
-
-
-        mHandler = new Handler(Looper.getMainLooper()) {
+        mHandler = new Handler(Looper.getMainLooper())
+        {
             @Override
-            public void handleMessage(Message message) {
+            public void handleMessage(Message message)
+            {
                 // This is where you do your work in the UI thread.
                 // Your worker tells you in the message what to do.
 
@@ -98,12 +96,12 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
                     _toast = Toast.makeText(getApplicationContext(), "Connected to server!", Toast.LENGTH_SHORT);
                     _toast.show();
                 }
-                else if(message.what == 0)
+                else if (message.what == 0)
                 {
                     _toast = Toast.makeText(getApplicationContext(), "Disconnected from server!", Toast.LENGTH_SHORT);
                     _toast.show();
                 }
-                else if(message.what == 2)
+                else if (message.what == 2)
                 {
                     _toast = Toast.makeText(getApplicationContext(), "Message has been sent successfully!", Toast.LENGTH_SHORT);
                     _toast.show();
@@ -254,10 +252,12 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         }
 
         dimmerHandler = new Handler();
-        dimmerRunable = new Runnable() {
+        dimmerRunable = new Runnable()
+        {
 
             @Override
-            public void run() {
+            public void run()
+            {
                 // TODO Auto-generated method stub
                 //Toast.makeText(MainActivity.this, "user is inactive from last 5 minutes",Toast.LENGTH_SHORT).show();
 
@@ -268,9 +268,12 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
                 boolean settingsCanWrite = Utils.hasWriteSettingsPermission(context);
 
                 // If do not have then open the Can modify system settings panel.
-                if(!settingsCanWrite) {
+                if (!settingsCanWrite)
+                {
                     Utils.changeWriteSettingsPermission(context);
-                }else {
+                }
+                else
+                {
                     Utils.changeScreenBrightness(context, 20);
                 }
             }
@@ -309,7 +312,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         {
             incrementValueIndexA.clear();
             incrementValueIndexA.add(new Pair<Integer, Boolean>(14, true));
-            buttonAMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+            buttonAMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
 
 
@@ -321,7 +324,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         {
             incrementValueIndexB.clear();
             incrementValueIndexB.add(new Pair<Integer, Boolean>(14, true));
-            buttonBMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x02, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+            buttonBMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x02, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
 
 
@@ -333,7 +336,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         {
             incrementValueIndexC.clear();
             incrementValueIndexC.add(new Pair<Integer, Boolean>(14, true));
-            buttonCMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x03, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+            buttonCMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x03, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
 
 
@@ -345,7 +348,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         {
             incrementValueIndexD.clear();
             incrementValueIndexD.add(new Pair<Integer, Boolean>(14, true));
-            buttonDMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x04, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+            buttonDMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x04, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
 
 
@@ -645,8 +648,6 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         }
 
 
-
-
         if (key.equals("list_pref_four_first_button_color"))
         {
             String newValue = sharedPreferences.getString(key, "");
@@ -674,7 +675,6 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
 
             buttonD.setBackgroundColor(Color.parseColor(newValue));
         }
-
 
 
         if (key.equals("edit_text_four_first_button_text"))
@@ -706,7 +706,6 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         }
 
 
-
         if (key.equals("edit_text_four_first_button_message"))
         {
             String newValue = sharedPreferences.getString(key, "");
@@ -720,7 +719,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
             {
                 incrementValueIndexA.clear();
                 incrementValueIndexA.add(new Pair<Integer, Boolean>(14, true));
-                buttonAMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+                buttonAMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
             }
         }
 
@@ -737,7 +736,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
             {
                 incrementValueIndexB.clear();
                 incrementValueIndexB.add(new Pair<Integer, Boolean>(14, true));
-                buttonBMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x02, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+                buttonBMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x02, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
             }
         }
 
@@ -754,7 +753,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
             {
                 incrementValueIndexC.clear();
                 incrementValueIndexC.add(new Pair<Integer, Boolean>(14, true));
-                buttonCMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x03, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+                buttonCMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x03, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
             }
         }
 
@@ -771,7 +770,7 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
             {
                 incrementValueIndexD.clear();
                 incrementValueIndexD.add(new Pair<Integer, Boolean>(14, true));
-                buttonDMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x04, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+                buttonDMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x04, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
             }
         }
     }
@@ -875,7 +874,17 @@ public class FourButtonsActivity extends AppCompatActivity implements TcpObject.
         // TODO Auto-generated method stub
         super.onUserInteraction();
 
-        Utils.changeScreenBrightness(getApplicationContext(), 100);
+        boolean settingsCanWrite = Utils.hasWriteSettingsPermission(getApplicationContext());
+
+        // If do not have then open the Can modify system settings panel.
+        if (!settingsCanWrite)
+        {
+            Utils.changeWriteSettingsPermission(getApplicationContext());
+        }
+        else
+        {
+            Utils.changeScreenBrightness(getApplicationContext(), 100);
+        }
 
         stopHandler();//stop first and then start
         startHandler();

@@ -59,13 +59,14 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
 
-
         buttonA = findViewById(R.id.buttonA);
         buttonB = findViewById(R.id.buttonB);
 
-        mHandler = new Handler(Looper.getMainLooper()) {
+        mHandler = new Handler(Looper.getMainLooper())
+        {
             @Override
-            public void handleMessage(Message message) {
+            public void handleMessage(Message message)
+            {
                 // This is where you do your work in the UI thread.
                 // Your worker tells you in the message what to do.
 
@@ -76,12 +77,12 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
                     _toast = Toast.makeText(getApplicationContext(), "Connected to server!", Toast.LENGTH_SHORT);
                     _toast.show();
                 }
-                else if(message.what == 0)
+                else if (message.what == 0)
                 {
                     _toast = Toast.makeText(getApplicationContext(), "Disconnected from server!", Toast.LENGTH_SHORT);
                     _toast.show();
                 }
-                else if(message.what == 2)
+                else if (message.what == 2)
                 {
                     _toast = Toast.makeText(getApplicationContext(), "Message has been sent successfully!", Toast.LENGTH_SHORT);
                     _toast.show();
@@ -180,10 +181,12 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
         });
 
         dimmerHandler = new Handler();
-        dimmerRunable = new Runnable() {
+        dimmerRunable = new Runnable()
+        {
 
             @Override
-            public void run() {
+            public void run()
+            {
                 // TODO Auto-generated method stub
                 //Toast.makeText(MainActivity.this, "user is inactive from last 5 minutes",Toast.LENGTH_SHORT).show();
 
@@ -194,9 +197,12 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
                 boolean settingsCanWrite = Utils.hasWriteSettingsPermission(context);
 
                 // If do not have then open the Can modify system settings panel.
-                if(!settingsCanWrite) {
+                if (!settingsCanWrite)
+                {
                     Utils.changeWriteSettingsPermission(context);
-                }else {
+                }
+                else
+                {
                     Utils.changeScreenBrightness(context, 20);
                 }
             }
@@ -220,7 +226,17 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
         // TODO Auto-generated method stub
         super.onUserInteraction();
 
-        Utils.changeScreenBrightness(getApplicationContext(), 100);
+        boolean settingsCanWrite = Utils.hasWriteSettingsPermission(getApplicationContext());
+
+        // If do not have then open the Can modify system settings panel.
+        if (!settingsCanWrite)
+        {
+            Utils.changeWriteSettingsPermission(getApplicationContext());
+        }
+        else
+        {
+            Utils.changeScreenBrightness(getApplicationContext(), 100);
+        }
 
         stopHandler();//stop first and then start
         startHandler();
@@ -255,7 +271,7 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
         {
             incrementValueIndexA.clear();
             incrementValueIndexA.add(new Pair<Integer, Boolean>(14, true));
-            buttonAMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+            buttonAMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
 
 
@@ -268,7 +284,7 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
         {
             incrementValueIndexB.clear();
             incrementValueIndexB.add(new Pair<Integer, Boolean>(14, true));
-            buttonBMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x02, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+            buttonBMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x02, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
         }
     }
 
@@ -569,7 +585,6 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
         }
 
 
-
         if (key.equals("list_pref_two_first_button_text"))
         {
             String newValue = sharedPreferences.getString(key, "");
@@ -585,7 +600,6 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
         }
 
 
-
         if (key.equals("list_pref_two_first_button_message"))
         {
             String newValue = sharedPreferences.getString(key, "");
@@ -599,7 +613,7 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
             {
                 incrementValueIndexA.clear();
                 incrementValueIndexA.add(new Pair<Integer, Boolean>(14, true));
-                buttonAMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+                buttonAMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x01, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
             }
         }
 
@@ -616,7 +630,7 @@ public class TwoButtonsActivity extends AppCompatActivity implements TcpObject.I
             {
                 incrementValueIndexB.clear();
                 incrementValueIndexB.add(new Pair<Integer, Boolean>(14, true));
-                buttonBMessage = new byte[] {(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x02, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
+                buttonBMessage = new byte[]{(byte) 0x80, 0x02, 0x00, 0x0b, 0x14, 0x02, 0x02, 0x02, 0x11, 0x01, 0x03, 0x11, 0x02, 0x0A, (byte) 0xff};
             }
         }
     }

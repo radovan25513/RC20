@@ -241,7 +241,17 @@ public class MainActivity extends AppCompatActivity implements TcpObject.IOnActi
         // TODO Auto-generated method stub
         super.onUserInteraction();
 
-        Utils.changeScreenBrightness(getApplicationContext(), 100);
+        boolean settingsCanWrite = Utils.hasWriteSettingsPermission(getApplicationContext());
+
+        // If do not have then open the Can modify system settings panel.
+        if (!settingsCanWrite)
+        {
+            Utils.changeWriteSettingsPermission(getApplicationContext());
+        }
+        else
+        {
+            Utils.changeScreenBrightness(getApplicationContext(), 100);
+        }
 
         stopHandler();//stop first and then start
         startHandler();
